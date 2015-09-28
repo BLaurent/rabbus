@@ -1,6 +1,6 @@
 {
-  "name": "rabbus",
-  "version": "0.4.3",
+  "name": "rabbus-custom",
+  "version": "0.4.4",
   "description": "A highly opinionated set of messaging abstractions for RabbitMQ, built with Wascally",
   "main": "rabbus/index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/derickbailey/rabbus.git"
+    "url": "https://github.com/BLaurent/rabbus.git"
   },
   "keywords": [
     "rabbitmq",
