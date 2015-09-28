@@ -25,18 +25,19 @@ Receiver.prototype._start = function(){
 
   var that = this;
   var rabbit = this.rabbit;
+  var connectionName = this.options.connectionName;
   var exchangeOptions = this.options.exchange;
   var queueOptions = this.options.queue;
   var routingKey = this.options.routingKey;
 
   this._startPromise = when.promise(function(resolve, reject){
-    var qP = rabbit.addQueue(queueOptions.name, queueOptions);
-    var exP = rabbit.addExchange(exchangeOptions.name, exchangeOptions.type, exchangeOptions);
+    var qP = rabbit.addQueue(queueOptions.name, queueOptions, connectionName);
+    var exP = rabbit.addExchange(exchangeOptions.name, exchangeOptions.type, exchangeOptions, connectionName);
 
     when.all([exP, qP]).then(function(){
 
       rabbit
-        .bindQueue(exchangeOptions.name, queueOptions.name, routingKey)
+        .bindQueue(exchangeOptions.name, queueOptions.name, routingKey, connectionName)
         .then(function(){
           resolve();
         })
@@ -47,7 +48,7 @@ Receiver.prototype._start = function(){
     }).then(null, function(err){
       reject(err);
     });
-  
+
   }).then(null, function(err){
     that.emitError(err);
   });
@@ -64,7 +65,6 @@ Receiver.prototype.receive = function(cb){
 
   this._start().then(function(){
 
-    console.log("receiving from", queueOptions.name, messageType);
     that.emit("ready");
 
     var handler = middleware.prepare(function(config){
@@ -89,7 +89,7 @@ Receiver.prototype.receive = function(cb){
     });
 
     that.subscription = rabbit.handle(messageType, handler);
-    rabbit.startSubscription(queueOptions.name);
+    rabbit.startSubscription(queueOptions.name, that.options.connectionName);
 
   }).then(null, function(err){
     that.emitError(err);

@@ -20,6 +20,7 @@ util.inherits(Sender, Producer);
 Sender.prototype.send = function(data, done){
   var that = this;
   var rabbit = this.rabbit;
+  var connectionName = this.options.connectionName;
   var exchange = this.options.exchange;
   var messageType = this.options.messageType;
   var routingKey = this.options.routingKey;
@@ -27,7 +28,6 @@ Sender.prototype.send = function(data, done){
 
   this._start().then(function(){
     that.emit("ready");
-    console.log("sending message to", exchange.name);
 
     var handler = middleware.prepare(function(config){
       config.last(function(message, headers, actions){
@@ -40,7 +40,7 @@ Sender.prototype.send = function(data, done){
         };
 
         rabbit
-          .publish(exchange.name, properties)
+          .publish(exchange.name, properties, connectionName)
           .then(function(){
             if (done){ done(); }
           })
@@ -52,7 +52,7 @@ Sender.prototype.send = function(data, done){
     });
 
     handler(data);
-      
+
   }).then(null, function(err){
     that.emitError(err);
   });

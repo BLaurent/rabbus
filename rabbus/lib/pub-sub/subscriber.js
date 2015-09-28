@@ -24,23 +24,25 @@ Subscriber.prototype._start = function(){
 
   var that = this;
   var rabbit = this.rabbit;
+  var connectionName = this.options.connectionName;
   var options = this.options;
   var queueOptions = options.queue;
   var exchangeOptions = options.exchange;
 
   this._startPromise = when.promise(function(resolve, reject){
 
-    var qP = rabbit.addQueue(queueOptions.name, queueOptions);
+    var qP = rabbit.addQueue(queueOptions.name, queueOptions, connectionName);
     var exP = rabbit.addExchange(
-      exchangeOptions.name, 
-      exchangeOptions.type, 
-      exchangeOptions
+      exchangeOptions.name,
+      exchangeOptions.type,
+      exchangeOptions,
+      connectionName
     );
 
     when.all([exP, qP]).then(function(){
 
       rabbit
-        .bindQueue(exchangeOptions.name, queueOptions.name, options.routingKeys)
+        .bindQueue(exchangeOptions.name, queueOptions.name, options.routingKeys, connectionName)
         .then(function(){
           resolve();
         })
@@ -51,7 +53,7 @@ Subscriber.prototype._start = function(){
     }).then(null, function(err){
       reject(err);
     });
-  
+
   });
 
   return this._startPromise;
@@ -86,7 +88,7 @@ Subscriber.prototype.subscribe = function(cb){
     });
 
     that.subscription = rabbit.handle(messageType, handler);
-    rabbit.startSubscription(queue);
+    rabbit.startSubscription(queue, that.options.connectionName);
 
   }).then(null, function(err){
     that.emitError(err);

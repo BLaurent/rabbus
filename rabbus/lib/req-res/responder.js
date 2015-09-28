@@ -19,6 +19,7 @@ util.inherits(Responder, Consumer);
 
 Responder.prototype._start = function(){
   var rabbit = this.rabbit;
+  var connectionName = this.options.connectionName;
   var exchange = this.options.exchange;
   var queue = this.options.queue;
   var routingKey = this.options.routingKey;
@@ -28,12 +29,12 @@ Responder.prototype._start = function(){
   }
 
   this._startPromise = when.promise(function(resolve, reject){
-    var qP = rabbit.addQueue(queue.name, queue);
-    var exP = rabbit.addExchange(exchange.name, exchange.type, exchange);
+    var qP = rabbit.addQueue(queue.name, queue, connectionName);
+    var exP = rabbit.addExchange(exchange.name, exchange.type, exchange, connectionName);
 
     when.all([qP, exP]).then(function(){
       rabbit
-        .bindQueue(exchange.name, queue.name, routingKey)
+        .bindQueue(exchange.name, queue.name, routingKey, connectionName)
         .then(function(){
           resolve();
         })
@@ -59,7 +60,6 @@ Responder.prototype.handle = function(cb){
   this._start().then(function(){
 
     that.emit("ready");
-    console.log("listening for", messageType, "on", queue);
 
     var handler = middleware.prepare(function(config){
       config.on("ack", that.emit.bind(that, "ack"));
@@ -83,7 +83,7 @@ Responder.prototype.handle = function(cb){
     });
 
     that.subscription = rabbit.handle(messageType, handler);
-    rabbit.startSubscription(queue.name);
+    rabbit.startSubscription(queue.name, that.options.connectionName);
 
   }).then(null, function(err){
     that.emitError(err);

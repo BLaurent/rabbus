@@ -20,6 +20,7 @@ util.inherits(Requester, Producer);
 Requester.prototype.request = function(data, cb){
   var that = this;
   var rabbit = this.rabbit;
+  var connectionName = this.options.connectionName;
   var exchange = this.options.exchange;
   var messageType = this.options.messageType;
   var routingKey = this.options.routingKey;
@@ -27,7 +28,6 @@ Requester.prototype.request = function(data, cb){
 
   this._start().then(function(){
     that.emit("ready");
-    console.log("sending message to", exchange.name);
 
     var handler = middleware.prepare(function(config){
       config.last(function(message, headers, actions){
@@ -40,7 +40,7 @@ Requester.prototype.request = function(data, cb){
         };
 
         rabbit
-          .request(exchange.name, properties)
+          .request(exchange.name, properties, connectionName)
           .then(function(reply){
             cb(reply.body);
             reply.ack();
